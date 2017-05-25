@@ -27,7 +27,7 @@ exports.index = function (req, res, next) {
 
     var countOptions = {};
 
-    //Busquedas:
+   
     var search = req.query.search || '';
     if(search){
         var search_like = "%" + search.replace(/ +/g,"%") + "%";
@@ -36,10 +36,12 @@ exports.index = function (req, res, next) {
     }
     models.Quiz.count(countOptions)
         .then(function (count) {
-            
+
+         
             var itmes_per_page = 10;
            
             var pageno = parseInt(req.query.pageno) || 1;
+            
             res.locals.paginate_control = paginate(count, itmes_per_page, pageno, req.url);
             var findOptions = countOptions;
 
@@ -81,6 +83,7 @@ exports.create = function (req, res, next) {
        answer: req.body.answer
     });
 
+    
     quiz.save({fields: ["question", "answer"]})
         .then(function (quiz) {
             req.flash('success', 'Quiz creado con éxito');
@@ -107,7 +110,7 @@ exports.edit = function (req, res, next) {
 };
 
 // PUT /quizzes/:quizId
-exports.update = function (req, res, next) {
+exports.update = function (req, res, next) { 
     req.quiz.question = req.body.question;
     req.quiz.answer = req.body.answer; 
 
@@ -174,35 +177,35 @@ exports.check = function (req, res, next) {
 
 
 
-// GET /quizzes/:quizId/random_play
-exports.random_play = function (req, res, next) {
+// GET /quizzes/:quizId/randomplay
+exports.randomplay = function (req, res, next) {
 
-    if(req.session.random_play){
-        if(req.session.random_play.resolved){
-            var used = req.session.random_play.resolved.length ? req.session.random_play.resolved:[-1];
+    if(req.session.randomplay){
+        if(req.session.randomplay.resolved){
+            var used = req.session.randomplay.resolved.length ? req.session.randomplay.resolved:[-1];
         } else {
             var aux = []
-            req.session.random_play.resolved=aux;
+            req.session.randomplay.resolved=aux;
         }
     } else {
         var auxplay={};
-        req.session.random_play=auxplay;
+        req.session.randomplay=auxplay;
         var aux = []
-        req.session.random_play.resolved=aux;
+        req.session.randomplay.resolved=aux;
 
     }
 
-    var used = req.session.random_play.resolved.length ? req.session.random_play.resolved:[-1];
+    var used = req.session.randomplay.resolved.length ? req.session.randomplay.resolved:[-1];
     var whereopt = {'id': {$notIn: used}};
     models.Quiz.count()
         .then(function (count) {
             if(count===used.length){
-                var score = req.session.random_play.resolved.length;
-                req.session.random_play.resolved=[];
+                var score = req.session.randomplay.resolved.length;
+                req.session.randomplay.resolved=[];
                 res.render('quizzes/random_nomore', {score:score});
                 next();
             }
-            var max = count - req.session.random_play.resolved.length-1;
+            var max = count - req.session.randomplay.resolved.length-1;
             var aleatorio = Math.round(Math.random()*max);
             var findOptions = {
                 where: whereopt,
@@ -213,9 +216,9 @@ exports.random_play = function (req, res, next) {
         })
         .then(function (quiz) {
 
-            res.render('quizzes/random_play', {
+            res.render('quizzes/randomplay', {
                 quiz: quiz[0],
-                score: req.session.random_play.resolved.length
+                score: req.session.randomplay.resolved.length
             });
         })
         .catch(function (error) {
@@ -224,20 +227,30 @@ exports.random_play = function (req, res, next) {
 
 };
 
-// GET /quizzes/:quizId/randomcheck
+// GEt /quizzes/:quizId/randomcheck
 exports.randomcheck = function (req, res, next) {
     var answer = req.query.answer || "";
     var result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
     if(result){
-        req.session.random_play.resolved.push(parseInt(req.quiz.id));
-    }
+        req.session.randomplay.resolved.push(parseInt(req.quiz.id));
+    
 
 
     res.render('quizzes/random_result', {
-        score: req.session.random_play.resolved.length,
+        score: req.session.randomplay.resolved.length,
         quizId: req.quiz.id,
         answer: answer,
         result: result
-    });
+    });}
+    if(!result){
+       
+       res.render('quizzes/random_result', {
+         score: req.session.randomplay.resolved =[],
+         quizId: req.quiz.id,
+         answer: answer,
+         result: result
+});
+
+}
 
 };
