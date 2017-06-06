@@ -102,7 +102,31 @@ exports.index = function (req, res, next) {
 // GET /quizzes/:quizId
 exports.show = function (req, res, next) {
 
-    res.render('quizzes/show', {quiz: req.quiz});
+    var tips = req.quiz.Tips;      
+
+    if (tips.length > 0) {
+       req.quiz.tips_usernames = new Array();
+       models.User.findAll()
+       .then(function (autores) {
+          var j = 0;
+          for (j = 0; j < tips.length; j++) {
+             for (var i in autores) {
+                if (autores[i].id === tips[j].AuthorId) {
+                   req.quiz.tips_usernames.push(autores[i].username);
+                   break;
+                }
+             }
+          }
+          res.render('quizzes/show', {
+             quiz: req.quiz,
+          });
+       });
+    }
+    else {
+        res.render('quizzes/show', {
+          quiz: req.quiz,
+       });
+}
 };
 
 
@@ -202,10 +226,33 @@ exports.play = function (req, res, next) {
 
     var answer = req.query.answer || '';
 
-    res.render('quizzes/play', {
-        quiz: req.quiz,
-        answer: answer
-    });
+    var tips = req.quiz.Tips;      
+
+    if (tips.length > 0) {
+       req.quiz.tips_usernames = new Array();
+       models.User.findAll()
+       .then(function (autores) {
+          var j = 0;
+          for (j = 0; j < tips.length; j++) {
+             for (var i in autores) {
+                if (autores[i].id === tips[j].AuthorId) {
+                   req.quiz.tips_usernames.push(autores[i].username);
+                   break;
+                }
+             }
+          }
+          res.render('quizzes/play', {
+             quiz: req.quiz,
+             answer: answer
+          });
+       });
+    }
+    else {
+        res.render('quizzes/play', {
+          quiz: req.quiz,
+          answer: answer
+        });
+}
 };
 
 

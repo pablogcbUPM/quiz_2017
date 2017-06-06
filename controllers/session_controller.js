@@ -125,6 +125,10 @@ exports.new = function(req, res, next) {
     if (redir === '/session') {
         redir = "/";
     }
+    
+    if (redir.includes('/quizzes/randomcheck/')) {
+       redir = '/quizzes/randomplay';
+    }
 
     res.render('session/new', { redir: redir });
 };
