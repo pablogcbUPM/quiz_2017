@@ -8,7 +8,7 @@ exports.load = function (req, res, next, quizId) {
 
     models.Quiz.findById(quizId, {
         include: [
-            models.Tip,
+            {model: models.Tip, include: [{model: models.User, as: 'Author'}]},
             {model: models.User, as: 'Author'}
         ]
     })
@@ -102,31 +102,7 @@ exports.index = function (req, res, next) {
 // GET /quizzes/:quizId
 exports.show = function (req, res, next) {
 
-    var tips = req.quiz.Tips;      
-
-    if (tips.length > 0) {
-       req.quiz.tips_usernames = new Array();
-       models.User.findAll()
-       .then(function (autores) {
-          var j = 0;
-          for (j = 0; j < tips.length; j++) {
-             for (var i in autores) {
-                if (autores[i].id === tips[j].AuthorId) {
-                   req.quiz.tips_usernames.push(autores[i].username);
-                   break;
-                }
-             }
-          }
-          res.render('quizzes/show', {
-             quiz: req.quiz,
-          });
-       });
-    }
-    else {
-        res.render('quizzes/show', {
-          quiz: req.quiz,
-       });
-}
+        res.render('quizzes/show', {quiz: req.quiz}); 
 };
 
 
@@ -226,33 +202,10 @@ exports.play = function (req, res, next) {
 
     var answer = req.query.answer || '';
 
-    var tips = req.quiz.Tips;      
-
-    if (tips.length > 0) {
-       req.quiz.tips_usernames = new Array();
-       models.User.findAll()
-       .then(function (autores) {
-          var j = 0;
-          for (j = 0; j < tips.length; j++) {
-             for (var i in autores) {
-                if (autores[i].id === tips[j].AuthorId) {
-                   req.quiz.tips_usernames.push(autores[i].username);
-                   break;
-                }
-             }
-          }
-          res.render('quizzes/play', {
-             quiz: req.quiz,
-             answer: answer
-          });
-       });
-    }
-    else {
         res.render('quizzes/play', {
           quiz: req.quiz,
           answer: answer
         });
-}
 };
 
 
@@ -324,6 +277,14 @@ exports.randomplay = function (req, res, next) {
 
 // GEt /quizzes/:quizId/randomcheck
 exports.randomcheck = function (req, res, next) {
+    if(!req.session.randomplay){ 
+        var variable = {};
+        req.session.randomplay = variable;
+        var veces = 0;
+        req.session.randomplay.resolved = veces;
+        var idsAntiguos = [];
+        req.session.randomplay.used = idsAntiguos;
+}
     var answer = req.query.answer || "";
     var result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
     if(result){
