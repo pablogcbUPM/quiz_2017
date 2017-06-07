@@ -5,7 +5,10 @@ var Sequelize = require('sequelize');
 // Autoload la pista asociado a :tipId
 exports.load = function (req, res, next, tipId) {
 
-    models.Tip.findById(tipId)
+    models.Tip.findById(tipId,{ 
+        include: [
+            { model: models.User, as: 'Author'}
+    ]})
     .then(function (tip) {
         if (tip) {
             req.tip = tip;
@@ -19,20 +22,6 @@ exports.load = function (req, res, next, tipId) {
     });
 };
 
-// MW que permite acciones solamente si al usuario logeado es admin o es el autor del quiz.
-exports.adminOrAuthorRequired = function(req, res, next){
-
-    var isAdmin  = req.session.user.isAdmin;
-    var isAuthor = req.quiz.AuthorId === req.session.user.id;
-    var isTipAuthor = req.tip.AuthorId === req.session.user.id;
-
-    if (isAdmin || isAuthor || isTipAuthor) {
-        next();
-    } else {
-        console.log('Operación prohibida: El usuario logeado no es el autor del quiz, ni un administrador.');
-        res.send(403);
-    }
-};
 
 // GET /quizzes/:quizId/tips/new
 exports.new = function (req, res, next) {
@@ -50,12 +39,13 @@ exports.new = function (req, res, next) {
 
 // POST /quizzes/:quizId/tips
 exports.create = function (req, res, next) {
-    var AuthorId = req.session.user && req.session.user.id || 0;
+    var authorId = req.session.user && req.session.user.id || 0;
+
     var tip = models.Tip.build(
         {
             text: req.body.text,
             QuizId: req.quiz.id,
-            AuthorId: AuthorId
+            AuthorId: authorId
         });
 
     tip.save()
